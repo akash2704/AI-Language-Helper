@@ -2,9 +2,13 @@ import sqlite3
 from datetime import datetime
 from langchain.prompts import PromptTemplate
 import google.generativeai as genai
+import os
+import dotenv
+dotenv.load_dotenv()
+
 
 # --- Configure Gemini 1.5 Flash API ---
-API_KEY = "AIzaSyDVIBaGwFVc2c2q_dn08iuANzVbuLFh6sE"  # Replace with your actual API key
+API_KEY = os.getenv('GEMINI_API_KEY')  # Replace with your actual API key
 genai.configure(api_key=API_KEY)
 model = genai.GenerativeModel("gemini-1.5-flash")
 
