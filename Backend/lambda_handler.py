@@ -55,12 +55,21 @@ def handler(event, context):
             'SERVER_PORT': '443',
             'wsgi.version': (1, 0),
             'wsgi.url_scheme': 'https',
-            'wsgi.input': StringIO(body or ''),
+            'wsgi.input': StringIO(),
             'wsgi.errors': StringIO(),
             'wsgi.multithread': False,
             'wsgi.multiprocess': True,
             'wsgi.run_once': False
         }
+
+        # Handle body properly
+        if body:
+            from io import BytesIO
+            if isinstance(body, str):
+                body_bytes = body.encode('utf-8')
+            else:
+                body_bytes = body
+            environ['wsgi.input'] = BytesIO(body_bytes)
 
         # Add headers
         for key, value in headers.items():
