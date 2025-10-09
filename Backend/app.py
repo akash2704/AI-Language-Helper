@@ -54,9 +54,15 @@ def token_required(f):
             data = jwt.decode(token, app.secret_key, algorithms=["HS256"])
             current_user = get_user_by_id(data['user_id'])
             if not current_user:
-                raise Exception
-        except Exception:
+                return jsonify({'message': 'User not found'}), 401
+            # Add user to request context
+            request.current_user = current_user
+        except jwt.ExpiredSignatureError:
+            return jsonify({'message': 'Token has expired'}), 401
+        except jwt.InvalidTokenError:
             return jsonify({'message': 'Token is invalid'}), 401
+        except Exception as e:
+            return jsonify({'message': f'Token validation error: {str(e)}'}), 401
         return f(*args, **kwargs)
     return decorated
 
@@ -116,89 +122,128 @@ def verify_session():
 @app.route('/api/start_session', methods=['POST'])
 @token_required
 def start_session():
-    data = request.get_json()
-    target_lang = data.get('target_lang')
-    source_lang = data.get('source_lang')
-    level = data.get('level')
-    
-    if not all([target_lang, source_lang, level]):
-        return jsonify({'message': 'Missing required fields'}), 400
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({'message': 'No JSON data provided'}), 400
+            
+        target_lang = data.get('target_lang')
+        source_lang = data.get('source_lang')
+        level = data.get('level')
+        
+        if not all([target_lang, source_lang, level]):
+            return jsonify({'message': 'Missing required fields: target_lang, source_lang, level'}), 400
 
-    token = request.headers.get('Authorization').replace('Bearer ', '')
-    user_data = jwt.decode(token, app.secret_key, algorithms=["HS256"])
-    user_id = user_data['user_id']
+        # Get user ID from token
+        token = request.headers.get('Authorization').replace('Bearer ', '')
+        user_data = jwt.decode(token, app.secret_key, algorithms=["HS256"])
+        user_id = user_data['user_id']
 
-    scene_output = model.generate_content(scene_prompt.format(
-        target_lang=target_lang,
-        source_lang=source_lang,
-        level=level
-    )).text
-    response, corrections = parse_output(scene_output)
+        # Generate scene using Gemini
+        scene_output = model.generate_content(scene_prompt.format(
+            target_lang=target_lang,
+            source_lang=source_lang,
+            level=level
+        )).text
+        response, corrections = parse_output(scene_output)
 
-    conversation = [{'bot': response}]
-    session_id = create_session(user_id, target_lang, source_lang, level, json.dumps(conversation))
+        # Create session
+        conversation = [{'bot': response}]
+        session_id = create_session(user_id, target_lang, source_lang, level, json.dumps(conversation))
 
-    if session_id:
+        if session_id:
+            return jsonify({
+                'session_id': session_id,
+                'response': response,
+                'corrections': corrections
+            }), 200
+        else:
+            return jsonify({'message': 'Failed to create session'}), 500
+            
+    except Exception as e:
+        import traceback
         return jsonify({
-            'session_id': session_id,
-            'response': response,
-            'corrections': corrections
-        }), 200
-    else:
-        return jsonify({'message': 'Failed to create session'}), 500
+            'message': 'Internal server error',
+            'error': str(e),
+            'traceback': traceback.format_exc()
+        }), 500
 
 @app.route('/api/chat', methods=['POST'])
 @token_required
 def chat():
-    data = request.get_json()
-    user_input = data.get('user_input')
-    session_id = data.get('session_id')
-    
-    if not session_id:
-        return jsonify({'message': 'Missing session ID'}), 400
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({'message': 'No JSON data provided'}), 400
+            
+        user_input = data.get('user_input')
+        session_id = data.get('session_id')
+        
+        if not session_id:
+            return jsonify({'message': 'Missing session ID'}), 400
+        if not user_input:
+            return jsonify({'message': 'Missing user input'}), 400
 
-    session_data = get_session(session_id)
-    
-    if not session_data:
-        return jsonify({'message': 'Invalid session ID'}), 400
+        session_data = get_session(session_id)
+        
+        if not session_data:
+            return jsonify({'message': 'Invalid session ID'}), 400
 
-    target_lang = session_data['target_lang']
-    source_lang = session_data['source_lang']
-    conversation = json.loads(session_data['conversation'])
+        target_lang = session_data['target_lang']
+        source_lang = session_data['source_lang']
+        conversation = json.loads(session_data['conversation'])
 
-    chat_output = model.generate_content(chat_prompt.format(
-        target_lang=target_lang,
-        source_lang=source_lang,
-        user_input=user_input
-    )).text
-    response, corrections = parse_output(chat_output)
+        # Generate chat response
+        chat_output = model.generate_content(chat_prompt.format(
+            target_lang=target_lang,
+            source_lang=source_lang,
+            user_input=user_input
+        )).text
+        response, corrections = parse_output(chat_output)
 
-    conversation.append({'user': user_input, 'bot': response})
-    
-    # Record mistake if there are corrections
-    if corrections:
-        create_mistake(user_input, corrections, source_lang)
+        conversation.append({'user': user_input, 'bot': response})
+        
+        # Record mistake if there are corrections
+        if corrections and corrections != "No corrections needed":
+            create_mistake(user_input, corrections, source_lang)
 
-    # Update session
-    update_session_conversation(session_id, json.dumps(conversation))
+        # Update session
+        update_session_conversation(session_id, json.dumps(conversation))
 
-    return jsonify({'response': response, 'corrections': corrections}), 200
+        return jsonify({'response': response, 'corrections': corrections}), 200
+        
+    except Exception as e:
+        import traceback
+        return jsonify({
+            'message': 'Internal server error',
+            'error': str(e),
+            'traceback': traceback.format_exc()
+        }), 500
 
 @app.route('/api/feedback', methods=['GET'])
 @token_required
 def feedback():
-    session_id = request.args.get('session_id')
-    if not session_id:
-        return jsonify({'message': 'Missing session ID'}), 400
+    try:
+        session_id = request.args.get('session_id')
+        if not session_id:
+            return jsonify({'message': 'Missing session ID'}), 400
 
-    session_data = get_session(session_id)
-    
-    if not session_data:
-        return jsonify({'message': 'Invalid session ID'}), 400
+        session_data = get_session(session_id)
+        
+        if not session_data:
+            return jsonify({'message': 'Invalid session ID'}), 400
 
-    source_lang = session_data['source_lang']
-    feedback_text = get_feedback(source_lang)
-    return jsonify({'feedback': feedback_text}), 200
+        source_lang = session_data['source_lang']
+        feedback_text = get_feedback(source_lang)
+        return jsonify({'feedback': feedback_text}), 200
+        
+    except Exception as e:
+        import traceback
+        return jsonify({
+            'message': 'Internal server error',
+            'error': str(e),
+            'traceback': traceback.format_exc()
+        }), 500
 
 # --- Health Check ---
 @app.route('/health', methods=['GET'])
