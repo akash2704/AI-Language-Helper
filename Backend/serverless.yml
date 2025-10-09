@@ -1,12 +1,14 @@
 service: ai-language-helper-backend
 
-frameworkVersion: '^3.0.0'
+frameworkVersion: '3'
 
 provider:
   name: aws
   runtime: python3.9
   region: us-east-1
   stage: ${opt:stage, 'dev'}
+  timeout: 29
+  memorySize: 512
   environment:
     DYNAMODB_TABLE_USERS: ${self:service}-users-${self:provider.stage}
     DYNAMODB_TABLE_SESSIONS: ${self:service}-sessions-${self:provider.stage}
@@ -28,19 +30,22 @@ provider:
             - "arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.DYNAMODB_TABLE_USERS}"
             - "arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.DYNAMODB_TABLE_SESSIONS}"
             - "arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.DYNAMODB_TABLE_MISTAKES}"
+            - "arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.DYNAMODB_TABLE_USERS}/index/*"
+            - "arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.DYNAMODB_TABLE_SESSIONS}/index/*"
+            - "arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.DYNAMODB_TABLE_MISTAKES}/index/*"
 
 functions:
-  app:
+  api:
     handler: lambda_handler.handler
+    timeout: 29
+    memorySize: 512
     events:
-      - http:
+      - httpApi:
           path: /{proxy+}
           method: ANY
-          cors: true
-      - http:
+      - httpApi:
           path: /
           method: ANY
-          cors: true
 
 resources:
   Resources:
@@ -48,6 +53,7 @@ resources:
       Type: AWS::DynamoDB::Table
       Properties:
         TableName: ${self:provider.environment.DYNAMODB_TABLE_USERS}
+        BillingMode: PAY_PER_REQUEST
         AttributeDefinitions:
           - AttributeName: id
             AttributeType: S
@@ -65,20 +71,18 @@ resources:
                 KeyType: HASH
             Projection:
               ProjectionType: ALL
-            BillingMode: PAY_PER_REQUEST
           - IndexName: email-index
             KeySchema:
               - AttributeName: email
                 KeyType: HASH
             Projection:
               ProjectionType: ALL
-            BillingMode: PAY_PER_REQUEST
-        BillingMode: PAY_PER_REQUEST
 
     SessionsTable:
       Type: AWS::DynamoDB::Table
       Properties:
         TableName: ${self:provider.environment.DYNAMODB_TABLE_SESSIONS}
+        BillingMode: PAY_PER_REQUEST
         AttributeDefinitions:
           - AttributeName: id
             AttributeType: S
@@ -94,13 +98,12 @@ resources:
                 KeyType: HASH
             Projection:
               ProjectionType: ALL
-            BillingMode: PAY_PER_REQUEST
-        BillingMode: PAY_PER_REQUEST
 
     MistakesTable:
       Type: AWS::DynamoDB::Table
       Properties:
         TableName: ${self:provider.environment.DYNAMODB_TABLE_MISTAKES}
+        BillingMode: PAY_PER_REQUEST
         AttributeDefinitions:
           - AttributeName: id
             AttributeType: S
@@ -116,12 +119,15 @@ resources:
                 KeyType: HASH
             Projection:
               ProjectionType: ALL
-            BillingMode: PAY_PER_REQUEST
-        BillingMode: PAY_PER_REQUEST
 
 plugins:
   - serverless-python-requirements
 
 custom:
   pythonRequirements:
-    dockerizePip: false
+    dockerizePip: true
+    dockerImage: public.ecr.aws/sam/build-python3.9:latest
+    slim: true
+    strip: false
+    useStaticCache: false
+    useDownloadCache: false
