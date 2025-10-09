@@ -203,7 +203,23 @@ def feedback():
 # --- Health Check ---
 @app.route('/health', methods=['GET'])
 def health_check():
-    return jsonify({'status': 'healthy'}), 200
+    try:
+        # Test DynamoDB connection
+        from db_utils import get_table, USERS_TABLE
+        table = get_table(USERS_TABLE)
+        return jsonify({
+            'status': 'healthy',
+            'tables': {
+                'users': USERS_TABLE,
+                'sessions': os.getenv('DYNAMODB_TABLE_SESSIONS'),
+                'mistakes': os.getenv('DYNAMODB_TABLE_MISTAKES')
+            }
+        }), 200
+    except Exception as e:
+        return jsonify({
+            'status': 'unhealthy',
+            'error': str(e)
+        }), 500
 
 # --- Main ---
 if __name__ == '__main__':
