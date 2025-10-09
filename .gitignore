@@ -1,0 +1,58 @@
+# Global ignores
+__pycache__/
+*.py[cod]
+*.sqlite3
+*.db
+*.log
+*.env
+.env.*
+.DS_Store
+*.swp
+*.swo
+*.bak
+*.tmp
+*.pid
+
+# VSCode
+.vscode/
+
+# Python virtual environments
+venv/
+.env/
+
+# Poetry
+poetry.lock
+
+# Node modules
+language-learning-frontend/node_modules/
+
+# Next.js build output
+language-learning-frontend/.next/
+
+# Build output
+/dist/
+/build/
+
+# OS files
+Thumbs.db
+
+# Ignore secrets
+Backend/.env
+!Backend/.env.example
+
+# Ignore local databases
+Backend/*.db
+
+# Ignore compiled files
+Backend/__pycache__/
+
+# Ignore frontend env files
+language-learning-frontend/.env*
+!language-learning-frontend/.env.example
+
+# Serverless
+Backend/.serverless/
+Backend/node_modules/
+
+# AWS
+.aws/
