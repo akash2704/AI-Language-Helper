@@ -2,10 +2,10 @@ import google.generativeai as genai
 import os
 from db_utils import get_mistakes_by_language
 
-# --- Configure Gemini 1.5 Flash API ---
+# --- Configure Gemini API ---
 API_KEY = os.getenv('GEMINI_API_KEY')
 genai.configure(api_key=API_KEY)
-model = genai.GenerativeModel("gemini-1.5-flash")
+model = genai.GenerativeModel("gemini-1.5-flash-latest")
 
 # Prompt templates as strings (removed langchain dependency)
 scene_prompt = """You are a language teacher helping a student learn {target_lang}. Their native language is {source_lang}, and their level is {level}. Set an appropriate scene and start a conversation in {target_lang}. Output in two parts: 'Response: [conversation start]' and 'Corrections: No corrections needed for first turn'."""
