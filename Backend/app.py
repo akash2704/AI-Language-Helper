@@ -31,6 +31,16 @@ app = Flask(__name__)
 app.secret_key = os.getenv('SECRET_KEY', 'dev_secret_key')
 CORS(app, resources={r"/*": {"origins": "*"}})
 
+# Add error handler
+@app.errorhandler(Exception)
+def handle_exception(e):
+    import traceback
+    return jsonify({
+        'error': str(e),
+        'type': type(e).__name__,
+        'traceback': traceback.format_exc()
+    }), 500
+
 # --- Token Auth Decorator ---
 def token_required(f):
     @wraps(f)
