@@ -131,3 +131,8 @@ custom:
     useStaticCache: false
     useDownloadCache: false
     layer: false
+    noDeps:
+      - boto3
+      - botocore
+    pipCmdExtraArgs:
+      - --no-cache-dir
