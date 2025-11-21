@@ -274,10 +274,6 @@ Push to `main` branch triggers GitHub Actions deployment
 4. Push to branch (`git push origin feature/amazing-feature`)
 5. Open Pull Request
 
-## 📄 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
 ## 🆘 Troubleshooting
 
 ### Common Issues
@@ -296,20 +292,20 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ### Support
 
-- 📧 **Email**: [your-email@example.com]
+- 📧 **Email**: [akashkallai27@gmail.com]
 - 🐛 **Issues**: [GitHub Issues](https://github.com/yourusername/AI-language-Helper/issues)
-- 💬 **Discussions**: [GitHub Discussions](https://github.com/yourusername/AI-language-Helper/discussions)
+- 💬 **Discussions**: [GitHub Discussions](https://github.com/akash2704/AI-language-Helper/discussions)
 
 ---
 
 <div align="center">
 
-**Built with ❤️ by [Akash Ajay Kallai](https://github.com/yourusername)**
+**Built with ❤️ by [Akash Ajay Kallai](https://github.com/akash2704)**
 
 *Showcasing modern serverless architecture, AI integration, and full-stack development skills*
 
-[![LinkedIn](https://img.shields.io/badge/LinkedIn-0077B5?style=flat&logo=linkedin&logoColor=white)](https://linkedin.com/in/yourprofile)
-[![GitHub](https://img.shields.io/badge/GitHub-100000?style=flat&logo=github&logoColor=white)](https://github.com/yourusername)
-[![Portfolio](https://img.shields.io/badge/Portfolio-FF5722?style=flat&logo=google-chrome&logoColor=white)](https://yourportfolio.com)
+[![LinkedIn](https://img.shields.io/badge/LinkedIn-0077B5?style=flat&logo=linkedin&logoColor=white)](https://www.linkedin.com/in/akash-kallai-979a081ba/)
+[![GitHub](https://img.shields.io/badge/GitHub-100000?style=flat&logo=github&logoColor=white)](https://github.com/akash2704)
+[![Portfolio](https://img.shields.io/badge/Portfolio-FF5722?style=flat&logo=google-chrome&logoColor=white)](https://akashkallai.vercel.app/)
 
 </div>
